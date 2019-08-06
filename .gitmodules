@@ -1,0 +1,3 @@
+[submodule "contrib/stringhelper"]
+	path = contrib/stringhelper
+	url = https://github.com/frequem/stringhelper
