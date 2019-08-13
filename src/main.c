@@ -19,7 +19,7 @@ void read_file(FILE* fin, string_t* data){
 	char buf[FILE_CHUNKSIZE];
 	size_t nread;
 	while((nread = fread(buf, sizeof(char), FILE_CHUNKSIZE, fin)) > 0){
-		string_append(data, string_buf(buf, nread));
+		string_append(data, data, string_buf(buf, nread));
 	}
 }
 
@@ -77,28 +77,38 @@ int main(int argc, char** argv){
 	rules_t rules = RULES_INITIALIZER;
 	rule_t rule;
 	
-	int i = string_find(data, string_cstr("#replace "), 0);
-	int j;
-	while(i < string_len(data)){
-		if(i==0 || string_charAt(data, i-1) == '\n'){
+	int i = string_find(&data, string_cstr("#replace "), 0);
+	int j = 0;
+	while(i < string_len(&data)){
+		if(i==0 || string_charAt(&data, i-1) == '\n'){
 			rule = RULE_INITIALIZER;
-			string_copy(&rule.in, data);
-			string_copy(&rule.out, data);
 			
-			j = string_find(data, string_char(' '), i+9);
-			string_substr(&rule.in, i+9, j-i-9);
+			j = string_find(&data, string_char(' '), i+9);
+			string_substr(&rule.in, &data, i+9, j-i-9);
 			
-			i = string_find(data, string_char('\n'), j+1);
-			string_substr(&rule.out, j+1, i-j-1);
+			i = string_find(&data, string_char('\n'), j+1);
+			string_substr(&rule.out, &data, j+1, i-j-1);
 						
 			rules_add_rule(&rules, rule);
 			j = i+1;
 		}
-		i = string_find(data, string_cstr("#replace "), i);
+		i = string_find(&data, string_cstr("#replace "), i);
 	}
 	
+	//add newline
+	rule = RULE_INITIALIZER;
+	string_copy(&rule.in, string_cstr("\\n"));
+	string_copy(&rule.out, string_char('\n'));
+	rules_add_rule(&rules, rule);
+	
+	//add tab
+	rule = RULE_INITIALIZER;
+	string_copy(&rule.in, string_cstr("\\t"));
+	string_copy(&rule.out, string_char('\t'));
+	rules_add_rule(&rules, rule);
+	
 	if(norules){
-		string_substr(&data, j, -1);
+		string_substr(&data, &data, j, -1);
 		j = 0;
 	}
 	
@@ -108,7 +118,7 @@ int main(int argc, char** argv){
 	
 	rules_free(&rules);
 	
-	string_write(fileno(f_out), data);
+	string_write(fileno(f_out), &data);
 	
 	string_free(&data);
 	fclose(f_out);
